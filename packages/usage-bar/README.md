@@ -52,6 +52,36 @@ claude-usage-bar --interval 30 --position bottom-left
 - **Esc 鍵不保證一定按得到**:在 focus-follows-mouse(滑鼠移到哪、鍵盤焦點就跟到哪)的桌面環境下,視窗剛開啟時 Esc 有效,但只要你把滑鼠移去操作別的視窗,焦點就跟著跑掉,Esc 就按不到了。**右鍵選單是比較可靠的結束方式**,不依賴目前誰持有鍵盤焦點。
 - **`-topmost` 不保證一定蓋得住所有視窗**:某些全螢幕應用程式(例如瀏覽器全螢幕播放影片)可能會被桌面環境特別拉到最上層,蓋住這個浮動視窗。遇到這種狀況,先讓蓋住的視窗離開全螢幕,或用 `ps aux | grep claude-usage-bar` 找到 PID 用 `kill` 結束。
 
+## 開 Claude Code 時自動啟動
+
+在 `~/.claude/settings.json` 加入 `SessionStart` hook(已有 `hooks` 的話,合併進去即可):
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -n \"$DISPLAY\" ] && command -v claude-usage-bar >/dev/null && ! pgrep -u \"$USER\" -x claude-usage-ba >/dev/null && claude-usage-bar </dev/null >/dev/null 2>&1 || true",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+- `matcher: "startup|resume"`:只在新開或 `--resume`/`-c` 時觸發;`/clear`、compact 不會觸發,所以手動關掉視窗後不會又跳出來。
+- `pgrep -x claude-usage-ba`:已經有視窗在跑就不再開第二個(Linux 程序名稱 comm 最多 15 字元,所以是截斷後的名字)。
+- `[ -n "$DISPLAY" ]`:SSH 等沒有圖形介面的環境直接跳過。
+- 輸出導向 `/dev/null`:背景程序若繼承 hook 的 stdout/stderr,Claude Code 會一直等到 timeout,所以必須導掉。
+
+需要先用方式一(pipx)安裝,讓 `claude-usage-bar` 在 `PATH` 上。之後可在 Claude Code 裡用 `/hooks` 檢視或停用。
+
 ## 測試
 
 ```bash

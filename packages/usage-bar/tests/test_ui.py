@@ -1,6 +1,14 @@
 import pytest
 
-from claude_usage_bar.ui import GREEN, NEUTRAL, RED, YELLOW, color_for_percent, compute_position
+from claude_usage_bar.ui import (
+    GREEN,
+    NEUTRAL,
+    RED,
+    YELLOW,
+    color_for_percent,
+    compute_position,
+    format_bar_text,
+)
 
 
 def test_color_for_percent_none_is_neutral():
@@ -41,3 +49,21 @@ def test_compute_position(position, expected):
 def test_compute_position_rejects_unknown_position():
     with pytest.raises(KeyError):
         compute_position("center", window_w=100, window_h=30, screen_w=1920, screen_h=1080)
+
+
+def test_format_bar_text_good_values_no_error():
+    session_text, week_text = format_bar_text(2, 3, has_error=False)
+    assert session_text == "Session: 2%"
+    assert week_text == "Week: 3%"
+
+
+def test_format_bar_text_keeps_old_values_on_error():
+    session_text, week_text = format_bar_text(2, 3, has_error=True)
+    assert session_text == "Session: 2% ⚠"
+    assert week_text == "Week: 3%"
+
+
+def test_format_bar_text_cold_start_with_error():
+    session_text, week_text = format_bar_text(None, None, has_error=True)
+    assert session_text == "Session: --% ⚠"
+    assert week_text == "Week: --%"

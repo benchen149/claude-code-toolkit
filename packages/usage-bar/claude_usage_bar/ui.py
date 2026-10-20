@@ -30,13 +30,33 @@ def compute_position(position, window_w, window_h, screen_w, screen_h, margin=20
     return positions[position]
 
 
+def format_bar_text(last_session, last_week, has_error):
+    """Returns (session_text, week_text) given the last known-good
+    percentages and whether the latest fetch errored.
+
+    Keeps showing the last known-good percentages across a failed
+    refresh; only appends a small warning marker (to the session text
+    only), never blanks the numbers out.
+    """
+    session_text = (
+        f"Session: {last_session}%" if last_session is not None else "Session: --%"
+    )
+    week_text = f"Week: {last_week}%" if last_week is not None else "Week: --%"
+
+    if has_error:
+        session_text += " ⚠"
+
+    return session_text, week_text
+
+
 class FloatingBar:
-    def __init__(self, root: tk.Tk, position: str = "top-right"):
+    def __init__(self, root: tk.Tk, position: str = "top-right", on_exit=None):
         self.root = root
         self._position = position
         self._drag_data = {"x": 0, "y": 0}
         self._last_session_percent = None
         self._last_week_percent = None
+        self._on_exit = on_exit or self.root.destroy
 
         root.overrideredirect(True)
         root.attributes("-topmost", True)
@@ -57,10 +77,14 @@ class FloatingBar:
             widget.bind("<B1-Motion>", self._on_drag_motion)
             widget.bind("<Button-3>", self._show_context_menu)
 
-        root.bind("<Escape>", lambda event: root.destroy())
+        root.bind("<Escape>", lambda event: self._on_exit())
+
+        self._menu = Menu(self.root, tearoff=0)
+        self._menu.add_command(label="結束", command=self._on_exit)
 
         root.update_idletasks()
         self._place_at_default_position()
+        self.root.focus_force()
 
     def _place_at_default_position(self):
         window_w = self.root.winfo_width()
@@ -80,9 +104,10 @@ class FloatingBar:
         self.root.geometry(f"+{x}+{y}")
 
     def _show_context_menu(self, event):
-        menu = Menu(self.root, tearoff=0)
-        menu.add_command(label="結束", command=self.root.destroy)
-        menu.tk_popup(event.x_root, event.y_root)
+        try:
+            self._menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self._menu.grab_release()
 
     def update_snapshot(self, snapshot: UsageSnapshot) -> None:
         # Keep showing the last known-good percentages across a failed
@@ -92,17 +117,8 @@ class FloatingBar:
         if snapshot.week_percent is not None:
             self._last_week_percent = snapshot.week_percent
 
-        warn = " ⚠" if snapshot.error else ""
-
-        session_text = (
-            f"Session: {self._last_session_percent}%{warn}"
-            if self._last_session_percent is not None
-            else f"Session: --%{warn}"
-        )
-        week_text = (
-            f"Week: {self._last_week_percent}%{warn}"
-            if self._last_week_percent is not None
-            else f"Week: --%{warn}"
+        session_text, week_text = format_bar_text(
+            self._last_session_percent, self._last_week_percent, bool(snapshot.error)
         )
 
         self.session_label.config(text=session_text, fg=color_for_percent(self._last_session_percent))

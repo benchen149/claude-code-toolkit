@@ -51,11 +51,17 @@ def fetch_usage(timeout: float = 15.0) -> UsageSnapshot:
         return UsageSnapshot(error="request timed out")
 
     if proc.returncode != 0:
-        return UsageSnapshot(error=f"exit code {proc.returncode}", raw_text=proc.stdout)
+        return UsageSnapshot(
+            error=f"claude failed, exit code {proc.returncode}",
+            raw_text=f"{proc.stdout}\n{proc.stderr}".strip(),
+        )
 
     try:
         data = json.loads(proc.stdout)
     except json.JSONDecodeError:
-        return UsageSnapshot(error="invalid JSON from claude", raw_text=proc.stdout)
+        return UsageSnapshot(
+            error="invalid JSON from claude",
+            raw_text=f"{proc.stdout}\n{proc.stderr}".strip(),
+        )
 
     return parse_usage_text(data.get("result", ""))

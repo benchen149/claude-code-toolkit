@@ -23,3 +23,13 @@ def test_parse_args_rejects_invalid_position():
 def test_parse_args_rejects_non_positive_interval():
     with pytest.raises(SystemExit):
         parse_args(["--interval", "0"])
+
+
+def test_parse_args_foreground_defaults_false():
+    args = parse_args([])
+    assert args.foreground is False
+
+
+def test_parse_args_foreground_flag():
+    args = parse_args(["--foreground"])
+    assert args.foreground is True

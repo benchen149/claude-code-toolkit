@@ -108,6 +108,12 @@ class FloatingBar:
 
         self._menu = Menu(self.root, tearoff=0)
         self._menu.add_command(label="結束", command=self._on_exit)
+        # Release the popup grab only once the menu actually unposts (click
+        # on an entry, click outside, Escape) rather than immediately after
+        # tk_popup() returns -- releasing it too early stops the menu from
+        # noticing an outside click (e.g. starting a drag) and it's left
+        # stuck on screen instead of disappearing.
+        self._menu.bind("<Unmap>", lambda event: self._menu.grab_release())
 
         root.update_idletasks()
         self._place_at_default_position()
@@ -131,10 +137,7 @@ class FloatingBar:
         self.root.geometry(f"+{x}+{y}")
 
     def _show_context_menu(self, event):
-        try:
-            self._menu.tk_popup(event.x_root, event.y_root)
-        finally:
-            self._menu.grab_release()
+        self._menu.tk_popup(event.x_root, event.y_root)
 
     def update_snapshot(self, snapshot: UsageSnapshot) -> None:
         # Keep showing the last known-good percentages across a failed

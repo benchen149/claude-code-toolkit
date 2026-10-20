@@ -1,5 +1,7 @@
 import argparse
+import os
 import queue
+import sys
 import threading
 import tkinter as tk
 from tkinter import messagebox
@@ -26,11 +28,30 @@ def parse_args(argv=None):
     parser.add_argument(
         "--position", choices=POSITIONS, default="top-right", help="視窗位置(預設 top-right)"
     )
+    parser.add_argument(
+        "--foreground",
+        action="store_true",
+        help="不要自動轉背景執行,維持原本會卡住終端機的行為(除錯用)",
+    )
     return parser.parse_args(argv)
+
+
+def _daemonize():
+    """Fork once and detach from the controlling terminal so the shell
+    prompt returns immediately, like launching with `&`. The parent
+    process exits; the child continues as the real app, detached via
+    os.setsid(). Linux/Ubuntu only, consistent with the rest of this tool.
+    """
+    pid = os.fork()
+    if pid > 0:
+        sys.exit(0)
+    os.setsid()
 
 
 def main(argv=None):
     args = parse_args(argv)
+    if not args.foreground:
+        _daemonize()
     result_queue: "queue.Queue" = queue.Queue()
     stop_event = threading.Event()
 

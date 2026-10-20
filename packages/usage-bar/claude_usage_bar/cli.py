@@ -10,12 +10,19 @@ from .usage_fetcher import fetch_usage
 POSITIONS = ["top-right", "top-left", "bottom-right", "bottom-left"]
 
 
+def positive_int(value):
+    n = int(value)
+    if n < 1:
+        raise argparse.ArgumentTypeError(f"must be a positive integer, got {value}")
+    return n
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(
         prog="claude-usage-bar",
         description="浮動視窗顯示 Claude Code 的 /usage 額度使用狀況",
     )
-    parser.add_argument("--interval", type=int, default=60, help="刷新間隔秒數(預設 60)")
+    parser.add_argument("--interval", type=positive_int, default=60, help="刷新間隔秒數(預設 60)")
     parser.add_argument(
         "--position", choices=POSITIONS, default="top-right", help="視窗位置(預設 top-right)"
     )
@@ -36,11 +43,14 @@ def main(argv=None):
             stop_event.wait(args.interval)
 
     root = tk.Tk()
-    bar = FloatingBar(root, position=args.position)
+
+    exit_code = [0]
 
     def on_close():
         stop_event.set()
         root.destroy()
+
+    bar = FloatingBar(root, position=args.position, on_exit=on_close)
 
     def poll_queue():
         try:
@@ -48,6 +58,7 @@ def main(argv=None):
                 snapshot = result_queue.get_nowait()
                 if snapshot.fatal:
                     messagebox.showerror("claude-usage-bar", snapshot.error or "發生無法復原的錯誤")
+                    exit_code[0] = 1
                     on_close()
                     return
                 bar.update_snapshot(snapshot)
@@ -60,7 +71,8 @@ def main(argv=None):
     thread.start()
     root.after(200, poll_queue)
     root.mainloop()
+    return exit_code[0]
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

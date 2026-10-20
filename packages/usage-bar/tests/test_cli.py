@@ -18,3 +18,8 @@ def test_parse_args_custom_values():
 def test_parse_args_rejects_invalid_position():
     with pytest.raises(SystemExit):
         parse_args(["--position", "middle"])
+
+
+def test_parse_args_rejects_non_positive_interval():
+    with pytest.raises(SystemExit):
+        parse_args(["--interval", "0"])

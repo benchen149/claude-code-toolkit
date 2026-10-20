@@ -10,6 +10,23 @@ Ubuntu 上 `tkinter` 是獨立的系統套件,預設不會隨 Python 安裝,請�
 sudo apt install python3-tk
 ```
 
+### 方式一:pipx(推薦,裝成全域指令)
+
+裝完後不用 `cd` 進資料夾、不用 `source venv`,在任何地方都能直接打 `claude-usage-bar`。
+
+```bash
+sudo apt install pipx
+pipx install ./packages/usage-bar
+```
+
+之後 repo 有更新,重新安裝最新版:
+
+```bash
+pipx install ./packages/usage-bar --force
+```
+
+### 方式二:venv(開發/跑測試用)
+
 ```bash
 cd packages/usage-bar
 python3 -m venv .venv

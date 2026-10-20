@@ -49,6 +49,15 @@ def format_bar_text(last_session, last_week, has_error):
     return session_text, week_text
 
 
+def format_reset_text(last_session_reset, last_week_reset):
+    """Returns (session_reset_text, week_reset_text) given the last
+    known-good reset strings. Empty string when there's no value yet.
+    """
+    session_reset_text = f"resets {last_session_reset}" if last_session_reset else ""
+    week_reset_text = f"resets {last_week_reset}" if last_week_reset else ""
+    return session_reset_text, week_reset_text
+
+
 class FloatingBar:
     def __init__(self, root: tk.Tk, position: str = "top-right", on_exit=None):
         self.root = root
@@ -56,6 +65,8 @@ class FloatingBar:
         self._drag_data = {"x": 0, "y": 0}
         self._last_session_percent = None
         self._last_week_percent = None
+        self._last_session_reset = None
+        self._last_week_reset = None
         self._on_exit = on_exit or self.root.destroy
 
         root.overrideredirect(True)
@@ -65,14 +76,30 @@ class FloatingBar:
         self.session_label = tk.Label(
             root, text="Session: --%", fg=NEUTRAL, bg=BG, font=("Sans", 11)
         )
-        self.session_label.pack(side="left", padx=(10, 4), pady=6)
+        self.session_label.pack(anchor="w", padx=10, pady=(6, 0))
+
+        self.session_reset_label = tk.Label(
+            root, text="", fg="#aaaaaa", bg=BG, font=("Sans", 8)
+        )
+        self.session_reset_label.pack(anchor="w", padx=10)
 
         self.week_label = tk.Label(
             root, text="Week: --%", fg=NEUTRAL, bg=BG, font=("Sans", 11)
         )
-        self.week_label.pack(side="left", padx=(4, 10), pady=6)
+        self.week_label.pack(anchor="w", padx=10, pady=(4, 0))
 
-        for widget in (root, self.session_label, self.week_label):
+        self.week_reset_label = tk.Label(
+            root, text="", fg="#aaaaaa", bg=BG, font=("Sans", 8)
+        )
+        self.week_reset_label.pack(anchor="w", padx=10, pady=(0, 6))
+
+        for widget in (
+            root,
+            self.session_label,
+            self.session_reset_label,
+            self.week_label,
+            self.week_reset_label,
+        ):
             widget.bind("<ButtonPress-1>", self._on_drag_start)
             widget.bind("<B1-Motion>", self._on_drag_motion)
             widget.bind("<Button-3>", self._show_context_menu)
@@ -116,10 +143,19 @@ class FloatingBar:
             self._last_session_percent = snapshot.session_percent
         if snapshot.week_percent is not None:
             self._last_week_percent = snapshot.week_percent
+        if snapshot.session_reset is not None:
+            self._last_session_reset = snapshot.session_reset
+        if snapshot.week_reset is not None:
+            self._last_week_reset = snapshot.week_reset
 
         session_text, week_text = format_bar_text(
             self._last_session_percent, self._last_week_percent, bool(snapshot.error)
         )
+        session_reset_text, week_reset_text = format_reset_text(
+            self._last_session_reset, self._last_week_reset
+        )
 
         self.session_label.config(text=session_text, fg=color_for_percent(self._last_session_percent))
         self.week_label.config(text=week_text, fg=color_for_percent(self._last_week_percent))
+        self.session_reset_label.config(text=session_reset_text)
+        self.week_reset_label.config(text=week_reset_text)

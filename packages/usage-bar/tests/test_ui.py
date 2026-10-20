@@ -8,6 +8,7 @@ from claude_usage_bar.ui import (
     color_for_percent,
     compute_position,
     format_bar_text,
+    format_reset_text,
 )
 
 
@@ -67,3 +68,23 @@ def test_format_bar_text_cold_start_with_error():
     session_text, week_text = format_bar_text(None, None, has_error=True)
     assert session_text == "Session: --% ⚠"
     assert week_text == "Week: --%"
+
+
+def test_format_reset_text_with_values():
+    session_reset, week_reset = format_reset_text(
+        "Oct 21, 3:10am (Asia/Taipei)", "Oct 27, 11pm (Asia/Taipei)"
+    )
+    assert session_reset == "resets Oct 21, 3:10am (Asia/Taipei)"
+    assert week_reset == "resets Oct 27, 11pm (Asia/Taipei)"
+
+
+def test_format_reset_text_no_values_yet():
+    session_reset, week_reset = format_reset_text(None, None)
+    assert session_reset == ""
+    assert week_reset == ""
+
+
+def test_format_reset_text_partial():
+    session_reset, week_reset = format_reset_text("Oct 21, 3:10am (Asia/Taipei)", None)
+    assert session_reset == "resets Oct 21, 3:10am (Asia/Taipei)"
+    assert week_reset == ""

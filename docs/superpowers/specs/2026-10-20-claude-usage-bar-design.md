@@ -25,7 +25,7 @@ Current week (all models): 3% used · resets Oct 20, 11pm (Asia/Taipei)
 
 ## 架構
 
-**技術選擇**:Python + Tkinter(標準庫內建,免裝系統套件,Ubuntu 任何桌面環境都能跑)。
+**技術選擇**:Python + Tkinter(標準庫模組,但在 Ubuntu/Debian 上需要額外 `sudo apt install python3-tk` 才會存在 —— 不是 pip 套件,venv 不會自動帶有)。
 
 曾考慮但不採用:
 - GTK(PyGObject)— 視覺更原生,但需要 apt 裝系統套件,環境依賴重。
@@ -54,7 +54,7 @@ packages/usage-bar/
 **視窗外觀與互動**:
 - 無邊框(`overrideredirect`)、常駐最上層(`-topmost`)、預設顯示在螢幕右上角
 - 可用滑鼠拖曳移動視窗
-- 顯示內容:`Session: 2% · Week: 3%`,兩個數字各自依自己的百分比獨立變色提示(綠 <50% / 黃 50-80% / 紅 >80%)
+- 顯示內容:兩個獨立的 Label(`Session: 2%`、`Week: 3%`),各自依自己的百分比獨立變色提示(綠 <50% / 黃 50-80% / 紅 >80%)
 - 右鍵選單或「×」按鈕 / Esc 鍵可結束程式
 
 **CLI 參數**(entry point:`claude-usage-bar`):

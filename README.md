@@ -16,10 +16,12 @@
 git clone https://github.com/benchen149/claude-code-toolkit.git ~/git/claude-code-toolkit
 mkdir -p ~/.claude/commands
 echo "@$HOME/git/claude-code-toolkit/shared/CLAUDE.md" >> ~/.claude/CLAUDE.md
-ln -s ~/git/claude-code-toolkit/shared/commands/github-flow.md ~/.claude/commands/github-flow.md
+ln -s ~/git/claude-code-toolkit/shared/commands/*.md ~/.claude/commands/
 ```
 
-之後在 `~/git/claude-code-toolkit` 執行 `git pull`,原則與 `/github-flow` 都會一起更新。開新的 Claude Code session 後,用 `/memory` 確認有載入 `shared/CLAUDE.md`。
+之後在 `~/git/claude-code-toolkit` 執行 `git pull`,原則與 slash command 都會一起更新(新增的 command 需再執行一次 `ln -s`)。開新的 Claude Code session 後,用 `/memory` 確認有載入 `shared/CLAUDE.md`。
+
+若這台電腦還沒設定 SSH key 與 `gh` 登入,先執行 `/setup-github-ssh`,再開始使用 `/github-flow`。
 
 ## 共用程式碼修改原則
 
@@ -46,17 +48,18 @@ mkdir -p ~/.claude && curl -fsSL https://raw.githubusercontent.com/benchen149/cl
 | Command | 說明 |
 |---|---|
 | [`/github-flow`](shared/commands/github-flow.md) | issue → branch → PR → merge 流程;自動偵測 repo,一律採用 main + develop 分支模型(缺 `develop` 時會詢問後建立) |
+| [`/setup-github-ssh`](shared/commands/setup-github-ssh.md) | 新電腦一次性設定:安裝 `gh`、SSH key、`gh` 登入(一台電腦一個 fine-grained token)、git 身份 |
 
 **本機有 clone 這個 repo**:用 symlink,`git pull` 後自動更新:
 
 ```bash
-mkdir -p ~/.claude/commands && ln -s /path/to/claude-code-toolkit/shared/commands/github-flow.md ~/.claude/commands/github-flow.md
+mkdir -p ~/.claude/commands && ln -s /path/to/claude-code-toolkit/shared/commands/*.md ~/.claude/commands/
 ```
 
 **其他電腦(沒有 clone)**:
 
 ```bash
-mkdir -p ~/.claude/commands && curl -fsSL https://raw.githubusercontent.com/benchen149/claude-code-toolkit/main/shared/commands/github-flow.md -o ~/.claude/commands/github-flow.md
+mkdir -p ~/.claude/commands && for c in github-flow setup-github-ssh; do curl -fsSL https://raw.githubusercontent.com/benchen149/claude-code-toolkit/main/shared/commands/$c.md -o ~/.claude/commands/$c.md; done
 ```
 
 ## 結構

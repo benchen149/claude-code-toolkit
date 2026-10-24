@@ -1,8 +1,8 @@
 # GitHub Flow 自動化
 
-執行完整的 GitHub issue → branch → PR → merge 工作流程，或關閉指定的 PR / Issue。
+執行完整的 GitHub issue → branch → PR → merge 工作流程，或關閉指定的 PR / Issue。適用於任何 GitHub repo。
 
-本專案維持 `main`（穩定）與 `develop`（整合）兩條長期分支。Feature branch 一律從 `develop` 切出、PR 合回 `develop`；`develop` 要併進 `main` 時另外開一個 sync PR（見模式一 Step 8）。
+所有 repo 一律維持 `main`（穩定）與 `develop`（整合）兩條長期分支。Feature branch 一律從 `develop` 切出、PR 合回 `develop`；`develop` 要併進 `main` 時另外開一個 sync PR（見模式一 Step 8）。
 
 用 `gh` CLI（已登入帳號操作，不需要另外設定 `GITHUB_TOKEN`）。
 
@@ -13,6 +13,28 @@
 ```
 
 執行後會詢問要執行哪個模式。
+
+---
+
+## Step 0：偵測 repo 設定（兩種模式都要先做）
+
+```bash
+git remote get-url origin
+gh auth status
+gh repo view --json nameWithOwner,defaultBranchRef \
+  -q '.nameWithOwner + " " + .defaultBranchRef.name'
+git ls-remote --exit-code --heads origin develop
+```
+
+依序檢查，任一項不符合就停止並告知使用者：
+1. `origin` 必須是 `github.com`；GitLab 等其他平台不適用此流程
+2. `gh auth status` 必須已登入，否則提示使用者執行 `gh auth login`
+3. `gh repo view` 的第一個值記為 `$REPO`（例如 `owner/name`）；第二個值（default branch）必須是 `main`，若是 `master` 等其他名稱，請使用者先將 default branch 改名為 `main`
+4. `git ls-remote` exit code 為 0 代表 remote 已有 `develop`；若沒有，**詢問使用者同意後**從 `main` 建立：
+   ```bash
+   git fetch origin main
+   git push origin origin/main:refs/heads/develop
+   ```
 
 ---
 
@@ -28,7 +50,7 @@
 ### Step 2：開 GitHub Issue
 ```bash
 gh issue create \
-  --repo benchen149/claude-code-toolkit \
+  --repo $REPO \
   --title "$TITLE" \
   --body "$BODY"
 ```
@@ -68,7 +90,7 @@ git push origin {issue-number}-$SLUG
 ### Step 6：開 Pull Request
 ```bash
 gh pr create \
-  --repo benchen149/claude-code-toolkit \
+  --repo $REPO \
   --title "$TITLE" \
   --body "$BODY" \
   --head {issue-number}-$SLUG \
@@ -78,7 +100,7 @@ gh pr create \
 ### Step 7：確認是否 merge
 詢問使用者是否直接 merge，若是則：
 ```bash
-gh pr merge {pr-number} --repo benchen149/claude-code-toolkit --merge
+gh pr merge {pr-number} --repo $REPO --merge
 git checkout $BASE_BRANCH
 git pull origin $BASE_BRANCH
 git branch -d {issue-number}-$SLUG
@@ -90,11 +112,11 @@ git push origin --delete {issue-number}-$SLUG
 ### Step 8：sync develop 到 main（選用）
 若 base branch 是 `develop`，詢問是否開一個 sync PR 將變更合併進 `main`。
 
-開 sync PR 時**必須**在 body 帶入本次相關的 `Closes #X`，讓 GitHub 在 merge 進 main 時自動關閉 issue：
+開 sync PR 時**必須**在 body 帶入本次相關的 `Closes #X`，讓 GitHub 在 merge 進 `main` 時自動關閉 issue：
 
 ```bash
 gh pr create \
-  --repo benchen149/claude-code-toolkit \
+  --repo $REPO \
   --title "chore: sync develop changes to main" \
   --body "Closes #{issue-number}" \
   --head develop \
@@ -118,19 +140,19 @@ gh pr create \
 
 ### 關閉 Issue
 ```bash
-gh issue close {number} --repo benchen149/claude-code-toolkit
+gh issue close {number} --repo $REPO
 ```
 
 ### 關閉 PR
 ```bash
-gh pr close {number} --repo benchen149/claude-code-toolkit
+gh pr close {number} --repo $REPO
 ```
 
 ---
 
 ## 注意事項
 
-- 操作者需要已用 `gh auth login` 登入，且帳號對 `benchen149/claude-code-toolkit` 有 Issues / Pull requests / Contents 的寫入權限
-- 若 `gh auth status` 顯示未登入，流程開始前會提示先登入
+- 操作者需要已用 `gh auth login` 登入，且帳號對 `$REPO` 有 Issues / Pull requests / Contents 的寫入權限
+- 必須在 `origin` 為 GitHub 的 git repo 裡執行
 - base branch 預設為 `develop`，若要直接 merge 到 `main` 請在 Step 1 指定
 - feature branch merge 後自動刪除（local + remote），`develop`、`main` 等長期 branch 不在自動刪除範圍內

@@ -46,6 +46,14 @@ git checkout -b {issue-number}-$SLUG
 ### Step 4：等待使用者完成改動
 提示使用者進行程式碼修改，完成後告知 Claude 繼續。
 
+### Step 4.5：Diff 自我檢查
+Commit 前執行 `git diff $BASE_BRANCH`（含未 commit 的改動）和 `git status`（看新增檔案），逐一確認：
+- 每個改動都能對應到 issue 描述；無關的改動要退回或另開 issue
+- 沒有順手做的格式或重構變更
+- 沒有殘留因本次改動而未使用的 import／變數
+
+有疑慮的地方列出來給使用者確認，再進入 Step 5。
+
 ### Step 5：Commit & Push
 ```bash
 git add <changed files>

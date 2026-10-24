@@ -26,6 +26,26 @@ mkdir -p ~/.claude && curl -fsSL https://raw.githubusercontent.com/benchen149/cl
 
 這種方式不會自動更新;原則有修改時,先刪掉 `~/.claude/CLAUDE.md` 裡的舊段落再重跑一次。
 
+## 共用 slash command
+
+[`shared/commands/`](shared/commands/) 底下是可在任何 repo 使用的 slash command,裝到 `~/.claude/commands/` 後所有專案都能用。
+
+| Command | 說明 |
+|---|---|
+| [`/github-flow`](shared/commands/github-flow.md) | issue → branch → PR → merge 流程;自動偵測 repo 與 default branch,有 `develop` 時走 main + develop 模型 |
+
+**本機有 clone 這個 repo**:用 symlink,`git pull` 後自動更新:
+
+```bash
+mkdir -p ~/.claude/commands && ln -s /path/to/claude-code-toolkit/shared/commands/github-flow.md ~/.claude/commands/github-flow.md
+```
+
+**其他電腦(沒有 clone)**:
+
+```bash
+mkdir -p ~/.claude/commands && curl -fsSL https://raw.githubusercontent.com/benchen149/claude-code-toolkit/main/shared/commands/github-flow.md -o ~/.claude/commands/github-flow.md
+```
+
 ## 結構
 
 ```
@@ -35,4 +55,5 @@ claude-code-toolkit/
     usage-bar/               # 第一個工具
   shared/
     CLAUDE.md                # 共用程式碼修改原則
+    commands/                # 共用 slash command
 ```

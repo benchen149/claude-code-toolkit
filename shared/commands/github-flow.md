@@ -1,8 +1,6 @@
 # GitHub Flow 自動化
 
-執行完整的 GitHub issue → branch → PR → merge 工作流程，或關閉指定的 PR / Issue。
-
-本專案維持 `main`（穩定）與 `develop`（整合）兩條長期分支。Feature branch 一律從 `develop` 切出、PR 合回 `develop`；`develop` 要併進 `main` 時另外開一個 sync PR（見模式一 Step 8）。
+執行完整的 GitHub issue → branch → PR → merge 工作流程，或關閉指定的 PR / Issue。適用於任何 GitHub repo。
 
 用 `gh` CLI（已登入帳號操作，不需要另外設定 `GITHUB_TOKEN`）。
 
@@ -16,6 +14,25 @@
 
 ---
 
+## Step 0：偵測 repo 設定（兩種模式都要先做）
+
+```bash
+gh auth status
+gh repo view --json nameWithOwner,defaultBranchRef \
+  -q '.nameWithOwner + " " + .defaultBranchRef.name'
+git ls-remote --exit-code --heads origin develop
+```
+
+- 第一個值記為 `$REPO`（例如 `owner/name`），第二個值記為 `$DEFAULT_BRANCH`（例如 `main`）
+- `git ls-remote` exit code 為 0 代表 remote 有 `develop` branch
+- 若 `gh auth status` 顯示未登入，先提示使用者執行 `gh auth login`
+
+**分支模型**：
+- **有 `develop`**：維持 `$DEFAULT_BRANCH`（穩定）與 `develop`（整合）兩條長期分支。Feature branch 從 `develop` 切出、PR 合回 `develop`；要併進 `$DEFAULT_BRANCH` 時另外開 sync PR（見 Step 8）
+- **沒有 `develop`**：Feature branch 直接從 `$DEFAULT_BRANCH` 切出、PR 合回 `$DEFAULT_BRANCH`，略過 Step 8
+
+---
+
 ## 模式一：完整開發流程（issue → branch → PR → merge）
 
 ### Step 1：收集資訊
@@ -23,12 +40,12 @@
 - **Issue 標題**（例如：`feat: add xxx`，**標題一律使用英文**）
 - **Issue 描述**（問題背景、預計異動）
 - **Branch slug**（例如：`add-xxx`，會自動加上 issue 編號變成 `{number}-add-xxx`）
-- **目標 base branch**（預設 `develop`）— feature branch 從此 branch 切出，PR 也 merge 回此 branch
+- **目標 base branch**（有 `develop` 時預設 `develop`，否則預設 `$DEFAULT_BRANCH`）— feature branch 從此 branch 切出，PR 也 merge 回此 branch
 
 ### Step 2：開 GitHub Issue
 ```bash
 gh issue create \
-  --repo benchen149/claude-code-toolkit \
+  --repo $REPO \
   --title "$TITLE" \
   --body "$BODY"
 ```
@@ -68,7 +85,7 @@ git push origin {issue-number}-$SLUG
 ### Step 6：開 Pull Request
 ```bash
 gh pr create \
-  --repo benchen149/claude-code-toolkit \
+  --repo $REPO \
   --title "$TITLE" \
   --body "$BODY" \
   --head {issue-number}-$SLUG \
@@ -78,30 +95,30 @@ gh pr create \
 ### Step 7：確認是否 merge
 詢問使用者是否直接 merge，若是則：
 ```bash
-gh pr merge {pr-number} --repo benchen149/claude-code-toolkit --merge
+gh pr merge {pr-number} --repo $REPO --merge
 git checkout $BASE_BRANCH
 git pull origin $BASE_BRANCH
 git branch -d {issue-number}-$SLUG
 git push origin --delete {issue-number}-$SLUG
 ```
 - merge 後自動刪除 feature branch（local + remote），無需詢問使用者
-- **絕對不可刪除** `develop`、`main` 等長期 branch，只刪除格式為 `{issue-number}-$SLUG` 的 feature branch
+- **絕對不可刪除** `$DEFAULT_BRANCH`、`develop` 等長期 branch，只刪除格式為 `{issue-number}-$SLUG` 的 feature branch
 
-### Step 8：sync develop 到 main（選用）
-若 base branch 是 `develop`，詢問是否開一個 sync PR 將變更合併進 `main`。
+### Step 8：sync develop 到 $DEFAULT_BRANCH（選用，僅限 base branch 是 `develop`）
+詢問是否開一個 sync PR 將變更合併進 `$DEFAULT_BRANCH`。
 
-開 sync PR 時**必須**在 body 帶入本次相關的 `Closes #X`，讓 GitHub 在 merge 進 main 時自動關閉 issue：
+開 sync PR 時**必須**在 body 帶入本次相關的 `Closes #X`，讓 GitHub 在 merge 進 `$DEFAULT_BRANCH` 時自動關閉 issue：
 
 ```bash
 gh pr create \
-  --repo benchen149/claude-code-toolkit \
-  --title "chore: sync develop changes to main" \
+  --repo $REPO \
+  --title "chore: sync develop changes to $DEFAULT_BRANCH" \
   --body "Closes #{issue-number}" \
   --head develop \
-  --base main
+  --base $DEFAULT_BRANCH
 ```
 
-> **原因**：GitHub 的 `Closes #X` 只在 PR merge 進 default branch（`main`）時觸發，feature branch → `develop` 不會自動關閉 issue。
+> **原因**：GitHub 的 `Closes #X` 只在 PR merge 進 default branch 時觸發，feature branch → `develop` 不會自動關閉 issue。
 
 ---
 
@@ -118,19 +135,18 @@ gh pr create \
 
 ### 關閉 Issue
 ```bash
-gh issue close {number} --repo benchen149/claude-code-toolkit
+gh issue close {number} --repo $REPO
 ```
 
 ### 關閉 PR
 ```bash
-gh pr close {number} --repo benchen149/claude-code-toolkit
+gh pr close {number} --repo $REPO
 ```
 
 ---
 
 ## 注意事項
 
-- 操作者需要已用 `gh auth login` 登入，且帳號對 `benchen149/claude-code-toolkit` 有 Issues / Pull requests / Contents 的寫入權限
-- 若 `gh auth status` 顯示未登入，流程開始前會提示先登入
-- base branch 預設為 `develop`，若要直接 merge 到 `main` 請在 Step 1 指定
-- feature branch merge 後自動刪除（local + remote），`develop`、`main` 等長期 branch 不在自動刪除範圍內
+- 操作者需要已用 `gh auth login` 登入，且帳號對 `$REPO` 有 Issues / Pull requests / Contents 的寫入權限
+- 必須在有 GitHub remote（`origin`）的 git repo 裡執行
+- feature branch merge 後自動刪除（local + remote），`$DEFAULT_BRANCH`、`develop` 等長期 branch 不在自動刪除範圍內

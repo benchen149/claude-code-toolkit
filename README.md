@@ -32,7 +32,7 @@ mkdir -p ~/.claude && curl -fsSL https://raw.githubusercontent.com/benchen149/cl
 
 | Command | 說明 |
 |---|---|
-| [`/github-flow`](shared/commands/github-flow.md) | issue → branch → PR → merge 流程;自動偵測 repo 與 default branch,有 `develop` 時走 main + develop 模型 |
+| [`/github-flow`](shared/commands/github-flow.md) | issue → branch → PR → merge 流程;自動偵測 repo,一律採用 main + develop 分支模型(缺 `develop` 時會詢問後建立) |
 
 **本機有 clone 這個 repo**:用 symlink,`git pull` 後自動更新:
 

@@ -8,6 +8,19 @@
 |---|---|
 | [`usage-bar`](packages/usage-bar/) | Ubuntu 上的浮動視窗,即時顯示 Claude Code 的 `/usage` 額度使用狀況。 |
 
+## 新電腦快速安裝
+
+裝好 Claude Code 後執行以下指令,一次設定好[共用程式碼修改原則](#共用程式碼修改原則)與[共用 slash command](#共用-slash-command):
+
+```bash
+git clone https://github.com/benchen149/claude-code-toolkit.git ~/git/claude-code-toolkit
+mkdir -p ~/.claude/commands
+echo "@$HOME/git/claude-code-toolkit/shared/CLAUDE.md" >> ~/.claude/CLAUDE.md
+ln -s ~/git/claude-code-toolkit/shared/commands/github-flow.md ~/.claude/commands/github-flow.md
+```
+
+之後在 `~/git/claude-code-toolkit` 執行 `git pull`,原則與 `/github-flow` 都會一起更新。開新的 Claude Code session 後,用 `/memory` 確認有載入 `shared/CLAUDE.md`。
+
 ## 共用程式碼修改原則
 
 [`shared/CLAUDE.md`](shared/CLAUDE.md) 是跨專案、跨電腦共用的 Claude 程式碼修改原則(取自 [Karpathy guidelines](https://github.com/multica-ai/andrej-karpathy-skills)),不依賴任何 plugin。放進使用者層級的 `~/.claude/CLAUDE.md` 後,該電腦上所有專案都會生效。

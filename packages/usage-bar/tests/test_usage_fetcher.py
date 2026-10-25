@@ -17,6 +17,10 @@ SAMPLE_SESSION_ONLY = (
     "Current session: 45% used · resets Oct 21, 3:10am (Asia/Taipei)\n"
 )
 
+SAMPLE_NO_ACTIVE_SESSION = (
+    "Current week (all models): 9% used · resets Oct 27, 10:59pm (Asia/Taipei)\n"
+)
+
 SAMPLE_UNPARSEABLE = "Something unexpected happened.\n"
 
 
@@ -33,6 +37,14 @@ def test_parse_usage_text_partial_missing_week():
     snapshot = parse_usage_text(SAMPLE_SESSION_ONLY)
     assert snapshot.session_percent == 45
     assert snapshot.week_percent is None
+    assert snapshot.error is None
+
+
+def test_parse_usage_text_no_active_session_is_zero():
+    snapshot = parse_usage_text(SAMPLE_NO_ACTIVE_SESSION)
+    assert snapshot.session_percent == 0
+    assert snapshot.session_reset == ""
+    assert snapshot.week_percent == 9
     assert snapshot.error is None
 
 

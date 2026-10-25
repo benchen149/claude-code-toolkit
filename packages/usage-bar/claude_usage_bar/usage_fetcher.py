@@ -30,6 +30,11 @@ def parse_usage_text(text: str) -> UsageSnapshot:
     if session_match:
         snapshot.session_percent = int(session_match.group(1))
         snapshot.session_reset = session_match.group(2).strip()
+    elif week_match:
+        # No session line alongside a week line means no active 5-hour
+        # window. Empty reset (not None) clears any stale reset time in the UI.
+        snapshot.session_percent = 0
+        snapshot.session_reset = ""
     if week_match:
         snapshot.week_percent = int(week_match.group(1))
         snapshot.week_reset = week_match.group(2).strip()

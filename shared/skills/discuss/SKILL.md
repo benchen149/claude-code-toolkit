@@ -18,7 +18,11 @@ description: 記錄討論並產生討論文件到 discuss-notes 目錄（由環�
 
 環境變數 `DISCUSS_NOTES_DIR` 指向的目錄（獨立 git repo，只有 `main` 分支），各電腦在 `~/.claude/settings.json` 的 `env` 自行設定。
 
-- 開始前用 `echo "$DISCUSS_NOTES_DIR"` 確認；未設定、或目錄不存在時，**停下來告知使用者並詢問路徑，不自行猜測**
+- 開始前用 `echo "$DISCUSS_NOTES_DIR"` 確認；未設定、或目錄不存在時，**停下來告知使用者並詢問路徑，不自行猜測**，也不代改 `settings.json`。訊息要說明：
+  1. 是哪一種情況：未設定，或已設定為 `<路徑>` 但目錄不存在
+  2. 修復方式：在 `~/.claude/settings.json` 的 `env` 設定 `DISCUSS_NOTES_DIR`，指向 discuss-notes repo 的本機路徑；repo 還沒 clone 就先 clone
+  3. 使用者也可以直接提供路徑，這次先用它
+  4. 修改設定後要開新 session 才會生效
 - 確認後讀該 repo 的 `CLAUDE.md`，以它為準
 
 ## Filename rule

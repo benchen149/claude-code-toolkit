@@ -10,6 +10,7 @@
 | [`shared/CLAUDE.md`](shared/CLAUDE.md) | 共用程式碼修改原則(取自 [Karpathy guidelines](https://github.com/multica-ai/andrej-karpathy-skills)),所有專案生效 |
 | [`/github-flow`](shared/commands/github-flow.md) | issue → branch → PR → merge 流程,一律採用 `main` + `develop` |
 | [`/setup-github-ssh`](shared/commands/setup-github-ssh.md) | 新電腦一次性設定:`gh`、SSH key、`gh` 登入、git 身份 |
+| [`discuss`](shared/skills/discuss/SKILL.md) | 記錄討論到 discuss-notes repo(路徑由 `DISCUSS_NOTES_DIR` 指定) |
 
 ## 情境一:新電腦(例如公司)
 
@@ -22,10 +23,18 @@
    L="@$HOME/git/claude-code-toolkit/shared/CLAUDE.md"
    grep -qxF "$L" ~/.claude/CLAUDE.md 2>/dev/null || echo "$L" >> ~/.claude/CLAUDE.md
    ln -sf ~/git/claude-code-toolkit/shared/commands/*.md ~/.claude/commands/
+   mkdir -p ~/.claude/skills
+   ln -sfn ~/git/claude-code-toolkit/shared/skills/discuss ~/.claude/skills/discuss
    ```
 
 3. 開啟 `claude`,執行 `/setup-github-ssh` 完成 SSH key 與 `gh` 登入
-4. 確認:`/memory` 有 `shared/CLAUDE.md`;輸入 `/` 看得到 `github-flow`、`setup-github-ssh`
+4. 若要使用 `discuss` skill:clone 你的 discuss-notes repo,並在 `~/.claude/settings.json` 的 `env` 設定 `DISCUSS_NOTES_DIR` 為該路徑,例如:
+
+   ```json
+   { "env": { "DISCUSS_NOTES_DIR": "/home/<user>/git/discuss-notes" } }
+   ```
+
+5. 確認:`/memory` 有 `shared/CLAUDE.md`;輸入 `/` 看得到 `github-flow`、`setup-github-ssh`
 
 ## 情境二:新增 git repo
 
@@ -59,7 +68,7 @@
 cd ~/git/claude-code-toolkit && git pull
 ```
 
-原則與 command 是 import / symlink,`git pull` 後馬上生效。
+原則、command 與 skill 是 import / symlink,`git pull` 後馬上生效。
 
 ## 結構
 
@@ -70,4 +79,5 @@ claude-code-toolkit/
   shared/
     CLAUDE.md         # 共用程式碼修改原則
     commands/         # 共用 slash command
+    skills/           # 共用 skill(symlink 到 ~/.claude/skills/)
 ```

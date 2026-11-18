@@ -28,13 +28,14 @@
    ```
 
 3. 開啟 `claude`,執行 `/setup-github-ssh` 完成 SSH key 與 `gh` 登入
-4. 若要使用 `discuss` skill:clone 你的 discuss-notes repo,並在 `~/.claude/settings.json` 的 `env` 設定 `DISCUSS_NOTES_DIR` 為該路徑,例如:
+4. 確認:`/memory` 有 `shared/CLAUDE.md`;輸入 `/` 看得到 `github-flow`、`setup-github-ssh`
+5. (選用,只有要用 `discuss` skill 才需要)clone 你的 discuss-notes repo,並在 `~/.claude/settings.json` 的 `env` 設定 `DISCUSS_NOTES_DIR` 為該路徑,例如:
 
    ```json
    { "env": { "DISCUSS_NOTES_DIR": "/home/<user>/git/discuss-notes" } }
    ```
 
-5. 確認:`/memory` 有 `shared/CLAUDE.md`;輸入 `/` 看得到 `github-flow`、`setup-github-ssh`
+   `env` 在 session 啟動時才讀取,設定後要開新 session 才會生效。沒設定時 `discuss` 會停下來提示,不會猜路徑。
 
 ## 情境二:新增 git repo
 
